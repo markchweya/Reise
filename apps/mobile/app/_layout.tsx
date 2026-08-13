@@ -28,6 +28,7 @@ export default function RootLayout() {
               backgroundColor: "#FFFFFF",
             },
             tabBarLabelStyle: { fontSize: 10, fontWeight: "700" },
+            tabBarHideOnKeyboard: true,
           }}
         >
           <Tabs.Screen

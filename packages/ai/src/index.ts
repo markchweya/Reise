@@ -102,7 +102,7 @@ export class LocalMemoryAssistant implements AIProvider {
     ].filter(Boolean) as ("origin" | "destination")[];
     if (needs.length) {
       return {
-        message: `Tell me your ${needs.join(" and ")} and I’ll plan it locally on this phone.`,
+        message: `What journey can I help with? Share your ${needs.join(" and ")} when you are ready.`,
         needs,
         journeys: [],
         intent,

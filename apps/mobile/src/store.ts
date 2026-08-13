@@ -7,6 +7,7 @@ import type {
 } from "@reise/shared";
 
 type ReiseState = {
+  userName: string;
   language: Language;
   travelcard: Travelcard;
   priority: JourneyPriority;
@@ -20,6 +21,7 @@ type ReiseState = {
 };
 
 export const useReiseStore = create<ReiseState>((set) => ({
+  userName: "Mark",
   language: "en",
   travelcard: "half_fare",
   priority: "fastest",

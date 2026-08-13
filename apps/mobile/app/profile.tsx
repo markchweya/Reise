@@ -23,16 +23,23 @@ export default function ProfileScreen() {
     travelcard,
     setTravelcard,
     unlockedAchievements,
+    userName,
   } = useReiseStore();
+  const initials = userName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenHeader eyebrow="Local preferences" title="Your Reise" />
       <Card style={styles.profile}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>RC</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View>
-          <Text style={styles.name}>Reise Companion</Text>
+          <Text style={styles.name}>{userName}</Text>
           <Text style={styles.local}>Preferences stored on this device</Text>
         </View>
       </Card>
