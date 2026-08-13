@@ -1,27 +1,27 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const languages = ['en', 'de', 'fr', 'it'] as const;
+export const languages = ["en", "de", "fr", "it"] as const;
 export type Language = (typeof languages)[number];
 
 export const locationSourceSchema = z.enum([
-  'reise_simulated_gps',
-  'reise_browser_gps',
-  'official_vehicle_position',
-  'future_onboard_system',
-  'scheduled_interpolation',
+  "reise_simulated_gps",
+  "reise_browser_gps",
+  "official_vehicle_position",
+  "future_onboard_system",
+  "scheduled_interpolation",
 ]);
 export type LocationSource = z.infer<typeof locationSourceSchema>;
 
 export const journeyPrioritySchema = z.enum([
-  'fastest',
-  'fewest_transfers',
-  'least_walking',
-  'cheapest',
-  'accessible',
+  "fastest",
+  "fewest_transfers",
+  "least_walking",
+  "cheapest",
+  "accessible",
 ]);
 export type JourneyPriority = z.infer<typeof journeyPrioritySchema>;
 
-export const travelcardSchema = z.enum(['none', 'half_fare', 'ga', 'regional']);
+export const travelcardSchema = z.enum(["none", "half_fare", "ga", "regional"]);
 export type Travelcard = z.infer<typeof travelcardSchema>;
 
 export const stopSchema = z.object({
@@ -58,16 +58,16 @@ export type Trip = z.infer<typeof tripSchema>;
 export const disruptionSchema = z.object({
   id: z.string(),
   category: z.enum([
-    'traffic',
-    'roadworks',
-    'accident',
-    'event',
-    'stop_closure',
-    'diversion',
-    'breakdown',
-    'cancellation',
+    "traffic",
+    "roadworks",
+    "accident",
+    "event",
+    "stop_closure",
+    "diversion",
+    "breakdown",
+    "cancellation",
   ]),
-  severity: z.enum(['minor', 'moderate', 'major']),
+  severity: z.enum(["minor", "moderate", "major"]),
   affectedRouteIds: z.array(z.string()),
   affectedStopIds: z.array(z.string()),
   note: z.string(),
@@ -102,12 +102,12 @@ export type FareQuote = {
   supersaver: number;
   adjusted: number;
   cheapestLabel: string;
-  currency: 'CHF';
+  currency: "CHF";
   isPrototype: true;
 };
 
 export type JourneyLeg = {
-  kind: 'walk' | 'transit';
+  kind: "walk" | "transit";
   from: Stop;
   to: Stop;
   lineCode?: string;
@@ -120,7 +120,7 @@ export type JourneyLeg = {
   liveEstimateMinutes?: number;
   walkingMetres: number;
   accessible: boolean;
-  source: 'scheduled' | 'official_prediction' | 'reise_live_estimate';
+  source: "scheduled" | "official_prediction" | "reise_live_estimate";
 };
 
 export type Journey = {
@@ -149,7 +149,7 @@ export type JourneyRequest = {
 };
 
 export type VehicleCheck = {
-  status: 'correct' | 'uncertain' | 'wrong';
+  status: "correct" | "uncertain" | "wrong";
   title: string;
   message: string;
 };
@@ -159,7 +159,8 @@ export const isFreshPosition = (
   now = new Date(),
   thresholdSeconds = 20,
 ): boolean =>
-  now.getTime() - new Date(position.serverTimestamp).getTime() <= thresholdSeconds * 1000;
+  now.getTime() - new Date(position.serverTimestamp).getTime() <=
+  thresholdSeconds * 1000;
 
 export const detectImpossibleJump = (
   previous: VehiclePosition,
@@ -167,7 +168,8 @@ export const detectImpossibleJump = (
   maxKph = 140,
 ): boolean => {
   const elapsedHours =
-    (new Date(next.deviceTimestamp).getTime() - new Date(previous.deviceTimestamp).getTime()) /
+    (new Date(next.deviceTimestamp).getTime() -
+      new Date(previous.deviceTimestamp).getTime()) /
     3_600_000;
   if (elapsedHours <= 0) return true;
   const toRad = (value: number) => (value * Math.PI) / 180;
@@ -184,46 +186,266 @@ export const detectImpossibleJump = (
 
 export const formatMinutes = (minutes: number): string => {
   const wrapped = ((minutes % 1440) + 1440) % 1440;
-  return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`;
+  return `${String(Math.floor(wrapped / 60)).padStart(2, "0")}:${String(wrapped % 60).padStart(2, "0")}`;
 };
 
 export const translations = {
-  en: { home: 'Home', ai: 'Reise AI', liveJourney: 'Live Journey', tickets: 'Tickets', profile: 'Profile', planJourney: 'Plan journey', from: 'From', to: 'To', testNetwork: 'Reise Test Network — simulated transport data', prototypeFare: 'Prototype fare — verify the final price with the transport provider.' },
-  de: { home: 'Start', ai: 'Reise AI', liveJourney: 'Live-Reise', tickets: 'Billette', profile: 'Profil', planJourney: 'Reise planen', from: 'Von', to: 'Nach', testNetwork: 'Reise-Testnetz — simulierte Verkehrsdaten', prototypeFare: 'Prototyp-Preis — endgültigen Preis beim Transportunternehmen prüfen.' },
-  fr: { home: 'Accueil', ai: 'Reise AI', liveJourney: 'Trajet en direct', tickets: 'Billets', profile: 'Profil', planJourney: 'Planifier le trajet', from: 'De', to: 'À', testNetwork: 'Réseau test Reise — données de transport simulées', prototypeFare: 'Tarif prototype — vérifiez le prix final auprès du transporteur.' },
-  it: { home: 'Home', ai: 'Reise AI', liveJourney: 'Viaggio in diretta', tickets: 'Biglietti', profile: 'Profilo', planJourney: 'Pianifica viaggio', from: 'Da', to: 'A', testNetwork: 'Rete di prova Reise — dati di trasporto simulati', prototypeFare: 'Tariffa prototipo — verifica il prezzo finale con il fornitore.' },
+  en: {
+    home: "Home",
+    ai: "Reise AI",
+    liveJourney: "Live Journey",
+    tickets: "Tickets",
+    profile: "Profile",
+    planJourney: "Plan journey",
+    from: "From",
+    to: "To",
+    testNetwork: "Reise Test Network — simulated transport data",
+    prototypeFare:
+      "Prototype fare — verify the final price with the transport provider.",
+  },
+  de: {
+    home: "Start",
+    ai: "Reise AI",
+    liveJourney: "Live-Reise",
+    tickets: "Billette",
+    profile: "Profil",
+    planJourney: "Reise planen",
+    from: "Von",
+    to: "Nach",
+    testNetwork: "Reise-Testnetz — simulierte Verkehrsdaten",
+    prototypeFare:
+      "Prototyp-Preis — endgültigen Preis beim Transportunternehmen prüfen.",
+  },
+  fr: {
+    home: "Accueil",
+    ai: "Reise AI",
+    liveJourney: "Trajet en direct",
+    tickets: "Billets",
+    profile: "Profil",
+    planJourney: "Planifier le trajet",
+    from: "De",
+    to: "À",
+    testNetwork: "Réseau test Reise — données de transport simulées",
+    prototypeFare:
+      "Tarif prototype — vérifiez le prix final auprès du transporteur.",
+  },
+  it: {
+    home: "Home",
+    ai: "Reise AI",
+    liveJourney: "Viaggio in diretta",
+    tickets: "Biglietti",
+    profile: "Profilo",
+    planJourney: "Pianifica viaggio",
+    from: "Da",
+    to: "A",
+    testNetwork: "Rete di prova Reise — dati di trasporto simulati",
+    prototypeFare:
+      "Tariffa prototipo — verifica il prezzo finale con il fornitore.",
+  },
 } satisfies Record<Language, Record<string, string>>;
 
 export const achievementDefinitions = [
-  { id: 'first-route', title: 'First departure', detail: 'Plan your first Reise journey', icon: '↗' },
-  { id: 'smooth-transfer', title: 'Smooth transfer', detail: 'Complete a transfer with time to spare', icon: '⇄' },
-  { id: 'right-way', title: 'Right way', detail: 'Confirm the correct vehicle and direction', icon: '✓' },
-  { id: 'delay-dodger', title: 'Delay dodger', detail: 'Accept a faster alternative', icon: '⚡' },
-  { id: 'basel-explorer', title: 'Basel explorer', detail: 'Visit five Basel-area stops', icon: '◇' },
-  { id: 'fare-finder', title: 'Fare finder', detail: 'Compare travelcard-adjusted fares', icon: '₣' },
-  { id: 'offline-ready', title: 'Offline ready', detail: 'Open a saved journey without internet', icon: '↓' },
-  { id: 'polyglot', title: 'Polyglot', detail: 'Use Reise in two languages', icon: 'Aa' },
+  {
+    id: "first-route",
+    title: "First departure",
+    detail: "Plan your first Reise journey",
+    icon: "↗",
+  },
+  {
+    id: "smooth-transfer",
+    title: "Smooth transfer",
+    detail: "Complete a transfer with time to spare",
+    icon: "⇄",
+  },
+  {
+    id: "right-way",
+    title: "Right way",
+    detail: "Confirm the correct vehicle and direction",
+    icon: "✓",
+  },
+  {
+    id: "delay-dodger",
+    title: "Delay dodger",
+    detail: "Accept a faster alternative",
+    icon: "⚡",
+  },
+  {
+    id: "basel-explorer",
+    title: "Basel explorer",
+    detail: "Visit five Basel-area stops",
+    icon: "◇",
+  },
+  {
+    id: "fare-finder",
+    title: "Fare finder",
+    detail: "Compare travelcard-adjusted fares",
+    icon: "₣",
+  },
+  {
+    id: "offline-ready",
+    title: "Offline ready",
+    detail: "Open a saved journey without internet",
+    icon: "↓",
+  },
+  {
+    id: "polyglot",
+    title: "Polyglot",
+    detail: "Use Reise in two languages",
+    icon: "Aa",
+  },
 ] as const;
 
 export const checkVehicle = (
   journey: Journey,
   route: Route | undefined,
-  vehicle: Pick<VehiclePosition, 'lineCode' | 'routeId' | 'directionId' | 'nextStopId'>,
+  vehicle: Pick<
+    VehiclePosition,
+    "lineCode" | "routeId" | "directionId" | "nextStopId"
+  >,
 ): VehicleCheck => {
-  const transit = journey.legs.find((leg) => leg.kind === 'transit');
+  const transit = journey.legs.find((leg) => leg.kind === "transit");
   if (!transit || !route) {
-    return { status: 'uncertain', title: 'Check needed', message: 'There is not enough information to confirm this vehicle.' };
+    return {
+      status: "uncertain",
+      title: "Check needed",
+      message: "There is not enough information to confirm this vehicle.",
+    };
   }
   if (vehicle.lineCode !== transit.lineCode || vehicle.routeId !== route.id) {
-    return { status: 'wrong', title: 'Do not board', message: `This is ${vehicle.lineCode}. Your journey requires ${transit.lineCode} toward ${transit.direction}.` };
+    return {
+      status: "wrong",
+      title: "Do not board",
+      message: `This is ${vehicle.lineCode}. Your journey requires ${transit.lineCode} toward ${transit.direction}.`,
+    };
   }
   if (vehicle.directionId !== route.directionId) {
-    return { status: 'wrong', title: 'Wrong direction', message: `Do not board ${vehicle.lineCode} toward ${route.destination}. Check the destination shown on the vehicle.` };
+    return {
+      status: "wrong",
+      title: "Wrong direction",
+      message: `Do not board ${vehicle.lineCode} toward ${route.destination}. Check the destination shown on the vehicle.`,
+    };
   }
   const nextIndex = route.stopIds.indexOf(vehicle.nextStopId);
   const destinationIndex = route.stopIds.indexOf(transit.to.id);
   if (destinationIndex !== -1 && nextIndex > destinationIndex) {
-    return { status: 'wrong', title: 'Destination passed', message: 'This vehicle has already passed your destination.' };
+    return {
+      status: "wrong",
+      title: "Destination passed",
+      message: "This vehicle has already passed your destination.",
+    };
   }
-  return { status: 'correct', title: 'Correct vehicle', message: `${vehicle.lineCode} is travelling toward ${transit.direction} and serves ${transit.to.name}.` };
+  return {
+    status: "correct",
+    title: "Correct vehicle",
+    message: `${vehicle.lineCode} is travelling toward ${transit.direction} and serves ${transit.to.name}.`,
+  };
 };
+
+export type DriverShift = {
+  id: string;
+  driverId: string;
+  vehicleId: string;
+  tripId: string;
+  active: boolean;
+  startedAt: string;
+  endedAt?: string;
+};
+
+type HandoverRecord = {
+  tokenHash: string;
+  shiftId: string;
+  expiresAt: number;
+  used: boolean;
+};
+
+const digest = async (value: string): Promise<string> => {
+  const data = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return [...new Uint8Array(data)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+};
+
+export class ShiftRegistry {
+  private readonly shifts = new Map<string, DriverShift>();
+  private readonly handovers = new Map<string, HandoverRecord>();
+
+  start(input: Omit<DriverShift, "id" | "active" | "startedAt">): DriverShift {
+    if (
+      [...this.shifts.values()].some(
+        (shift) => shift.active && shift.vehicleId === input.vehicleId,
+      )
+    )
+      throw new Error("vehicle_already_assigned");
+    if (
+      [...this.shifts.values()].some(
+        (shift) => shift.active && shift.driverId === input.driverId,
+      )
+    )
+      throw new Error("driver_already_assigned");
+    const shift: DriverShift = {
+      ...input,
+      id: `shift-${this.shifts.size + 1}`,
+      active: true,
+      startedAt: new Date().toISOString(),
+    };
+    this.shifts.set(shift.id, shift);
+    return shift;
+  }
+
+  checkout(shiftId: string): DriverShift {
+    const shift = this.shifts.get(shiftId);
+    if (!shift?.active) throw new Error("shift_not_active");
+    const ended: DriverShift = {
+      ...shift,
+      active: false,
+      endedAt: new Date().toISOString(),
+    };
+    this.shifts.set(shiftId, ended);
+    return ended;
+  }
+
+  acceptsPosition(shiftId: string, vehicleId: string): boolean {
+    const shift = this.shifts.get(shiftId);
+    return Boolean(shift?.active && shift.vehicleId === vehicleId);
+  }
+
+  async createHandover(
+    shiftId: string,
+    token: string,
+    ttlMs = 120_000,
+  ): Promise<void> {
+    const shift = this.shifts.get(shiftId);
+    if (!shift?.active) throw new Error("shift_not_active");
+    this.handovers.set(shiftId, {
+      tokenHash: await digest(token),
+      shiftId,
+      expiresAt: Date.now() + ttlMs,
+      used: false,
+    });
+  }
+
+  async acceptHandover(
+    shiftId: string,
+    token: string,
+    incomingDriverId: string,
+  ): Promise<DriverShift> {
+    const record = this.handovers.get(shiftId);
+    if (
+      !record ||
+      record.used ||
+      record.expiresAt < Date.now() ||
+      record.tokenHash !== (await digest(token))
+    )
+      throw new Error("handover_invalid");
+    record.used = true;
+    const outgoing = this.checkout(shiftId);
+    return this.start({
+      driverId: incomingDriverId,
+      vehicleId: outgoing.vehicleId,
+      tripId: outgoing.tripId,
+    });
+  }
+}
