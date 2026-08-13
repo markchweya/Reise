@@ -13,6 +13,14 @@ export const palette = {
   warningSoft: "#FFF5E5",
 };
 
+export const fonts = {
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semiBold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
+  extraBold: "Inter_800ExtraBold",
+} as const;
+
 export const shadow = {
   shadowColor: "#000000",
   shadowOffset: { width: 0, height: 8 },

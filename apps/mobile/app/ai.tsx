@@ -9,84 +9,193 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { LocalMemoryAssistant } from "@reise/ai";
 import type { Journey } from "@reise/shared";
 import { testNetwork } from "@reise/transit-providers";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ChatMessage, ThinkingMessage } from "../src/components/ChatMessage";
+import {
+  ChatSidebar,
+  type ChatHistoryItem,
+} from "../src/components/ChatSidebar";
 import { JourneyCard } from "../src/components/JourneyCard";
-import { ScreenHeader } from "../src/components/ui";
 import { useReiseStore } from "../src/store";
-import { palette, shadow } from "../src/theme";
+import { fonts, palette, shadow } from "../src/theme";
 
-type ChatMessage = {
+type Message = {
   id: string;
   role: "reise" | "user";
   text: string;
   journeys?: Journey[];
 };
 
+type Conversation = {
+  id: string;
+  title: string;
+  messages: Message[];
+};
+
+const titleFromMessage = (message: string) => {
+  const words = message.trim().split(/\s+/).slice(0, 6).join(" ");
+  return words.length > 34 ? `${words.slice(0, 34)}…` : words;
+};
+
+const createConversation = (userName: string, id = `chat-${Date.now()}`) => ({
+  id,
+  title: "New chat",
+  messages: [
+    {
+      id: `${id}-welcome`,
+      role: "reise" as const,
+      text: `Hi ${userName}, how can I help you?`,
+    },
+  ],
+});
+
+const waitForThinkingCue = () =>
+  new Promise<void>((resolve) => setTimeout(resolve, 450));
+
 export default function AiScreen() {
   const assistant = useMemo(() => new LocalMemoryAssistant(), []);
   const scrollView = useRef<ScrollView>(null);
   const { priority, travelcard, setJourney, userName } = useReiseStore();
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "reise",
-      text: `Hi ${userName}, how can I help you?`,
-    },
+  const initialConversation = useMemo(
+    () => createConversation(userName, "chat-initial"),
+    [userName],
+  );
+  const [conversations, setConversations] = useState<Conversation[]>([
+    initialConversation,
   ]);
-  const [busy, setBusy] = useState(false);
+  const [activeChatId, setActiveChatId] = useState(initialConversation.id);
+  const [pendingChatIds, setPendingChatIds] = useState<string[]>([]);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [input, setInput] = useState("");
+
+  const activeConversation =
+    conversations.find((chat) => chat.id === activeChatId) ?? conversations[0]!;
+  const isThinking = pendingChatIds.includes(activeConversation.id);
+
+  const appendMessage = (chatId: string, message: Message) => {
+    setConversations((current) =>
+      current.map((chat) =>
+        chat.id === chatId
+          ? { ...chat, messages: [...chat.messages, message] }
+          : chat,
+      ),
+    );
+  };
+
+  const createNewChat = () => {
+    const conversation = createConversation(userName);
+    setConversations((current) => [conversation, ...current]);
+    setActiveChatId(conversation.id);
+    setInput("");
+  };
 
   const ask = async () => {
     const message = input.trim();
-    if (!message || busy) return;
+    if (!message || isThinking) return;
 
+    const chatId = activeConversation.id;
     const requestId = Date.now().toString();
-    setMessages((current) => [
-      ...current,
-      { id: `user-${requestId}`, role: "user", text: message },
-    ]);
+    const isFirstUserMessage = !activeConversation.messages.some(
+      (item) => item.role === "user",
+    );
+
+    setConversations((current) =>
+      current.map((chat) =>
+        chat.id === chatId
+          ? {
+              ...chat,
+              title: isFirstUserMessage
+                ? titleFromMessage(message)
+                : chat.title,
+              messages: [
+                ...chat.messages,
+                { id: `user-${requestId}`, role: "user", text: message },
+              ],
+            }
+          : chat,
+      ),
+    );
     setInput("");
-    setBusy(true);
+    setPendingChatIds((current) => [...current, chatId]);
 
     try {
-      const response = await assistant.respond(
-        message,
-        { priority, travelcard, departureMinutes: 7 * 60 + 35 },
-        testNetwork,
-      );
-      setMessages((current) => [
-        ...current,
-        {
-          id: `reise-${requestId}`,
-          role: "reise",
-          text: response.message,
-          journeys: response.journeys,
-        },
+      const [response] = await Promise.all([
+        assistant.respond(
+          message,
+          { priority, travelcard, departureMinutes: 7 * 60 + 35 },
+          testNetwork,
+        ),
+        waitForThinkingCue(),
       ]);
+      appendMessage(chatId, {
+        id: `reise-${requestId}`,
+        role: "reise",
+        text: response.message,
+        journeys: response.journeys,
+      });
     } catch {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `reise-error-${requestId}`,
-          role: "reise",
-          text: "I could not answer that just now. Please try again.",
-        },
-      ]);
+      appendMessage(chatId, {
+        id: `reise-error-${requestId}`,
+        role: "reise",
+        text: "I could not answer that just now. Please try again.",
+      });
     } finally {
-      setBusy(false);
+      setPendingChatIds((current) => current.filter((id) => id !== chatId));
     }
   };
+
+  const history: ChatHistoryItem[] = conversations.map((chat) => ({
+    id: chat.id,
+    title: chat.title,
+    preview: chat.messages.at(-1)?.text ?? "Start a conversation",
+  }));
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <SafeAreaView edges={["top"]} style={styles.topSafeArea}>
+        <View style={styles.topBar}>
+          <Pressable
+            accessibilityLabel="Open chat history"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => setSidebarVisible(true)}
+            style={({ pressed }) => [
+              styles.topBarButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Ionicons name="menu" size={23} color={palette.ink} />
+          </Pressable>
+          <Text numberOfLines={1} style={styles.conversationTitle}>
+            {activeConversation.title}
+          </Text>
+          <Pressable
+            accessibilityLabel="Start a new chat"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={createNewChat}
+            style={({ pressed }) => [
+              styles.topBarButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Ionicons name="create-outline" size={21} color={palette.ink} />
+          </Pressable>
+        </View>
+      </SafeAreaView>
+
       <ScrollView
+        key={activeConversation.id}
         ref={scrollView}
+        bounces={false}
+        overScrollMode="never"
         style={styles.messages}
         contentContainerStyle={styles.content}
         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
@@ -95,63 +204,24 @@ export default function AiScreen() {
           scrollView.current?.scrollToEnd({ animated: true })
         }
       >
-        <ScreenHeader eyebrow="Private chat" title="Reise AI" />
-
         <View style={styles.conversation}>
-          {messages.map((message) => {
-            const isUser = message.role === "user";
-            return (
-              <View key={message.id}>
-                <View
-                  style={[
-                    styles.messageRow,
-                    isUser ? styles.userRow : styles.reiseRow,
-                  ]}
-                >
-                  {!isUser ? (
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>R</Text>
-                    </View>
-                  ) : null}
-                  <View
-                    style={[
-                      styles.bubble,
-                      isUser ? styles.userBubble : styles.reiseBubble,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.sender,
-                        isUser ? styles.userSender : styles.reiseSender,
-                      ]}
-                    >
-                      {isUser ? "You" : "Reise"}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.messageText,
-                        isUser && styles.userMessageText,
-                      ]}
-                    >
-                      {message.text}
-                    </Text>
-                  </View>
+          {activeConversation.messages.map((message) => (
+            <View key={message.id}>
+              <ChatMessage role={message.role} text={message.text} />
+              {message.journeys?.length ? (
+                <View style={styles.journeys}>
+                  {message.journeys.map((journey) => (
+                    <JourneyCard
+                      key={journey.id}
+                      journey={journey}
+                      onSelect={() => setJourney(journey)}
+                    />
+                  ))}
                 </View>
-
-                {message.journeys?.length ? (
-                  <View style={styles.journeys}>
-                    {message.journeys.map((journey) => (
-                      <JourneyCard
-                        key={journey.id}
-                        journey={journey}
-                        onSelect={() => setJourney(journey)}
-                      />
-                    ))}
-                  </View>
-                ) : null}
-              </View>
-            );
-          })}
+              ) : null}
+            </View>
+          ))}
+          {isThinking ? <ThinkingMessage /> : null}
         </View>
       </ScrollView>
 
@@ -169,12 +239,12 @@ export default function AiScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Send message"
-            accessibilityState={{ disabled: busy || !input.trim() }}
-            disabled={busy || !input.trim()}
+            accessibilityState={{ disabled: isThinking || !input.trim() }}
+            disabled={isThinking || !input.trim()}
             onPress={() => void ask()}
             style={({ pressed }) => [
               styles.sendButton,
-              (busy || !input.trim()) && styles.sendButtonDisabled,
+              (isThinking || !input.trim()) && styles.sendButtonDisabled,
               pressed && styles.sendButtonPressed,
             ]}
           >
@@ -182,71 +252,60 @@ export default function AiScreen() {
           </Pressable>
         </View>
       </View>
+
+      <ChatSidebar
+        activeChatId={activeConversation.id}
+        chats={history}
+        onClose={() => setSidebarVisible(false)}
+        onNewChat={createNewChat}
+        onSelectChat={setActiveChatId}
+        visible={sidebarVisible}
+      />
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#F7F7F7" },
+  topSafeArea: {
+    backgroundColor: "#F7F7F7",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8E8E8",
+  },
+  topBar: {
+    height: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+  },
+  topBarButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+  conversationTitle: {
+    flex: 1,
+    color: palette.ink,
+    fontFamily: fonts.semiBold,
+    fontSize: 15,
+    letterSpacing: -0.2,
+    textAlign: "center",
+    paddingHorizontal: 12,
+  },
   messages: { flex: 1 },
   content: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 66,
+    paddingTop: 24,
     paddingBottom: 18,
   },
   conversation: { flex: 1, gap: 18 },
-  messageRow: {
-    maxWidth: "88%",
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 9,
-  },
-  reiseRow: { alignSelf: "flex-start" },
-  userRow: { alignSelf: "flex-end" },
-  avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: palette.red,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 2,
-  },
-  avatarText: { color: palette.paper, fontSize: 13, fontWeight: "900" },
-  bubble: { paddingHorizontal: 16, paddingVertical: 13 },
-  reiseBubble: {
-    backgroundColor: palette.paper,
-    borderWidth: 1,
-    borderColor: palette.line,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
-    borderBottomLeftRadius: 20,
-  },
-  userBubble: {
-    backgroundColor: palette.red,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 20,
-    borderBottomLeftRadius: 20,
-  },
-  sender: {
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 0.8,
-    marginBottom: 5,
-    textTransform: "uppercase",
-  },
-  reiseSender: { color: palette.red },
-  userSender: { color: "#FFD5D5" },
-  messageText: {
-    color: palette.ink,
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 23,
-  },
-  userMessageText: { color: palette.paper },
   journeys: { marginTop: 14 },
   composerArea: {
     backgroundColor: "#F7F7F7",
@@ -275,6 +334,7 @@ const styles = StyleSheet.create({
     paddingTop: 11,
     paddingBottom: 10,
     color: palette.ink,
+    fontFamily: fonts.regular,
     fontSize: 16,
     lineHeight: 22,
   },
@@ -288,4 +348,5 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: { backgroundColor: "#B8B8B8" },
   sendButtonPressed: { transform: [{ scale: 0.96 }] },
+  pressed: { opacity: 0.65 },
 });

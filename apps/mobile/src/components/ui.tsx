@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { palette, shadow } from "../theme";
+import { fonts, palette, shadow } from "../theme";
 
 export function ScreenHeader({
   eyebrow,
@@ -105,17 +105,17 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: palette.red,
+    fontFamily: fonts.bold,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   title: {
     color: palette.ink,
+    fontFamily: fonts.extraBold,
     fontSize: 31,
     lineHeight: 36,
-    fontWeight: "800",
     letterSpacing: -1.1,
   },
   card: {
@@ -141,7 +141,11 @@ const styles = StyleSheet.create({
   },
   disabledButton: { opacity: 0.45 },
   pressed: { transform: [{ scale: 0.985 }] },
-  buttonText: { color: palette.paper, fontSize: 16, fontWeight: "800" },
+  buttonText: {
+    color: palette.paper,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+  },
   secondaryButtonText: { color: palette.ink },
   source: {
     alignSelf: "flex-start",
@@ -154,14 +158,23 @@ const styles = StyleSheet.create({
   sourceWarning: { backgroundColor: palette.warningSoft },
   sourceText: {
     color: palette.slate,
+    fontFamily: fonts.bold,
     fontSize: 10,
-    fontWeight: "800",
     letterSpacing: 0.7,
     textTransform: "uppercase",
   },
   sourceSuccessText: { color: palette.success },
   sourceWarningText: { color: palette.warning },
   metric: { flex: 1 },
-  metricValue: { color: palette.ink, fontSize: 22, fontWeight: "800" },
-  metricLabel: { color: palette.slate, fontSize: 12, marginTop: 2 },
+  metricValue: {
+    color: palette.ink,
+    fontFamily: fonts.bold,
+    fontSize: 22,
+  },
+  metricLabel: {
+    color: palette.slate,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    marginTop: 2,
+  },
 });
