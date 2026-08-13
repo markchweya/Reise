@@ -46,7 +46,7 @@ Copy the local API URL and anonymous key into both the Expo and Next public vari
 - Open `http://YOUR_LAPTOP_IP:3000/api/live` in the phone browser. If it fails, fix the firewall or address first.
 - Start Expo with `npx expo start --lan`. Use `npx expo start --tunnel` only for the Expo bundle; the Reise driver feed still needs a reachable base URL.
 - Clear Expo Go's cache and restart with `npx expo start --clear` if the bundle is stale.
-- `expo-router` is also listed as root development tooling so the Expo Babel preset can resolve Router correctly from this npm workspace.
+- Expo's native runtime packages are also pinned as root development tooling so npm workspace peer resolution cannot pull a newer, incompatible SDK into native builds.
 - Android emulators use `10.0.2.2` for the host, but a physical phone must use the laptop's LAN address.
 
 ## Browser GPS

@@ -17,12 +17,31 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.chweya.reise"
     },
-    "plugins": ["expo-router"],
-    "experiments": { "typedRoutes": true },
+    "plugins": [
+      "expo-router",
+      "expo-build-properties",
+      [
+        "llama.rn",
+        {
+          "enableOpenCLAndHexagon": false,
+          "forceCxx20": true
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2e7ebb1c-4692-477b-99e4-ef7b186a2ecc"
+      }
     }
   }
 }
