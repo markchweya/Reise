@@ -34,8 +34,8 @@ const buildTransitLeg = (route: Route, trip: Trip, from: Stop, to: Stop): Journe
   return {
     kind: 'transit', from, to, lineCode: route.lineCode, direction: route.destination, tripId: trip.id,
     departureMinutes: departure + delay, arrivalMinutes: scheduledArrival + delay,
-    scheduledArrivalMinutes: scheduledArrival, predictedArrivalMinutes: delay ? scheduledArrival + delay : undefined,
-    liveEstimateMinutes: delay ? scheduledArrival + delay + 1 : undefined,
+    scheduledArrivalMinutes: scheduledArrival,
+    ...(delay ? { predictedArrivalMinutes: scheduledArrival + delay, liveEstimateMinutes: scheduledArrival + delay + 1 } : {}),
     walkingMetres: 0, accessible: trip.accessible,
     source: delay ? 'reise_live_estimate' : 'scheduled',
   };
