@@ -1,10 +1,10 @@
-import { testNetwork } from '@reise/transit-providers';
-import type { Disruption, VehiclePosition } from '@reise/shared';
+import { testNetwork } from "@reise/transit-providers";
+import type { Disruption, VehiclePosition } from "@reise/shared";
 
 export type LiveState = {
   position: VehiclePosition;
   disruption?: Disruption;
-  tracking: 'offline' | 'paused' | 'active';
+  tracking: "offline" | "paused" | "active";
   updatedAt: string;
 };
 
@@ -15,7 +15,7 @@ declare global {
 export const getLiveState = (): LiveState => {
   globalThis.__reiseLiveState ??= {
     position: testNetwork.vehicles[0]!,
-    tracking: 'offline',
+    tracking: "offline",
     updatedAt: new Date().toISOString(),
   };
   return globalThis.__reiseLiveState;

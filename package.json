@@ -1,8 +1,12 @@
 {
   "name": "reise",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev:mobile": "npm run start --workspace @reise/mobile",
     "dev:driver": "npm run dev --workspace @reise/driver",

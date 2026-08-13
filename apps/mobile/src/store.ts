@@ -1,5 +1,10 @@
-import { create } from 'zustand';
-import type { Journey, JourneyPriority, Language, Travelcard } from '@reise/shared';
+import { create } from "zustand";
+import type {
+  Journey,
+  JourneyPriority,
+  Language,
+  Travelcard,
+} from "@reise/shared";
 
 type ReiseState = {
   language: Language;
@@ -15,11 +20,22 @@ type ReiseState = {
 };
 
 export const useReiseStore = create<ReiseState>((set) => ({
-  language: 'en', travelcard: 'half_fare', priority: 'fastest',
-  unlockedAchievements: ['first-route', 'right-way', 'fare-finder'],
+  language: "en",
+  travelcard: "half_fare",
+  priority: "fastest",
+  unlockedAchievements: ["first-route", "right-way", "fare-finder"],
   setLanguage: (language) => set({ language }),
   setTravelcard: (travelcard) => set({ travelcard }),
   setPriority: (priority) => set({ priority }),
-  setJourney: (selectedJourney) => set((state) => ({ selectedJourney, unlockedAchievements: [...new Set([...state.unlockedAchievements, 'first-route'])] })),
-  unlock: (id) => set((state) => ({ unlockedAchievements: [...new Set([...state.unlockedAchievements, id])] })),
+  setJourney: (selectedJourney) =>
+    set((state) => ({
+      selectedJourney,
+      unlockedAchievements: [
+        ...new Set([...state.unlockedAchievements, "first-route"]),
+      ],
+    })),
+  unlock: (id) =>
+    set((state) => ({
+      unlockedAchievements: [...new Set([...state.unlockedAchievements, id])],
+    })),
 }));
