@@ -1,7 +1,7 @@
 # Reise
 
 [![CI](https://github.com/markchweya/Reise/actions/workflows/ci.yml/badge.svg?branch=ChweyasBranch)](https://github.com/markchweya/Reise/actions/workflows/ci.yml)
-[![Expo SDK 57](https://img.shields.io/badge/Expo-57-000000?logo=expo)](https://docs.expo.dev/)
+[![Expo SDK 54](https://img.shields.io/badge/Expo-54-000000?logo=expo)](https://docs.expo.dev/versions/v54.0.0/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-171717?logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-12%20passing-087A45)](./docs/TESTING.md)
@@ -37,7 +37,7 @@ An OpenAI-compatible provider interface is present for later grounded explanatio
 ## Repository
 
 ```text
-apps/mobile                  Expo 57 passenger app
+apps/mobile                  Expo 54 passenger app
 apps/driver                  Next.js 16 driver dashboard + LAN API
 packages/shared              Schemas, lifecycle rules, translations
 packages/routing             Time-dependent routing and fares

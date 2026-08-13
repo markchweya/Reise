@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 20.19 or newer
 - npm 10 or newer
-- Expo Go compatible with SDK 57 on Android or iOS
+- Expo Go compatible with SDK 54 on Android or iOS
 - Docker Desktop and Supabase CLI only when using the persistent backend
 - A laptop and phone on the same trusted Wi-Fi network
 
@@ -46,6 +46,7 @@ Copy the local API URL and anonymous key into both the Expo and Next public vari
 - Open `http://YOUR_LAPTOP_IP:3000/api/live` in the phone browser. If it fails, fix the firewall or address first.
 - Start Expo with `npx expo start --lan`. Use `npx expo start --tunnel` only for the Expo bundle; the Reise driver feed still needs a reachable base URL.
 - Clear Expo Go's cache and restart with `npx expo start --clear` if the bundle is stale.
+- `expo-router` is also listed as root development tooling so the Expo Babel preset can resolve Router correctly from this npm workspace.
 - Android emulators use `10.0.2.2` for the host, but a physical phone must use the laptop's LAN address.
 
 ## Browser GPS
