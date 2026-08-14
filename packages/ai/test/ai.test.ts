@@ -23,4 +23,41 @@ describe("phone-memory assistant", () => {
     expect(result.needs).toEqual(["origin", "destination"]);
     expect(result.journeys).toHaveLength(0);
   });
+
+  it("answers a greeting without repeating the journey prompt", async () => {
+    const result = await new LocalMemoryAssistant().respond(
+      "hey",
+      { priority: "fastest", travelcard: "none", departureMinutes: 455 },
+      testNetwork,
+    );
+
+    expect(result.intent).toBe("fallback");
+    expect(result.needs).toHaveLength(0);
+    expect(result.message).toContain("Hey!");
+    expect(result.message).not.toContain("What journey can I help with?");
+  });
+
+  it("keeps origin and destination across two messages", async () => {
+    const assistant = new LocalMemoryAssistant();
+    const first = await assistant.respond(
+      "Basel SBB",
+      { priority: "fastest", travelcard: "none", departureMinutes: 455 },
+      testNetwork,
+    );
+    const second = await assistant.respond(
+      "Stallenstrasse",
+      {
+        origin: first.resolvedJourney.origin!,
+        priority: "fastest",
+        travelcard: "none",
+        departureMinutes: 455,
+      },
+      testNetwork,
+    );
+
+    expect(first.resolvedJourney.origin).toBe("Basel SBB");
+    expect(first.needs).toEqual(["destination"]);
+    expect(second.resolvedJourney.destination).toBe("Stallenstrasse");
+    expect(second.journeys.length).toBeGreaterThan(0);
+  });
 });

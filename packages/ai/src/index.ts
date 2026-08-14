@@ -13,6 +13,10 @@ export const assistantResultSchema = z.object({
   message: z.string(),
   needs: z.array(z.enum(["origin", "destination"])),
   journeys: z.array(z.custom<Journey>()),
+  resolvedJourney: z.object({
+    origin: z.string().optional(),
+    destination: z.string().optional(),
+  }),
   intent: z.enum([
     "plan",
     "location",
@@ -55,6 +59,51 @@ const findPlaces = (message: string) =>
     message.toLowerCase().includes(place.toLowerCase()),
   );
 
+const matchesGreeting = (message: string) =>
+  /^(hi|hello|hey|hiya|yo|good (morning|afternoon|evening))[!.?\s]*$/i.test(
+    message,
+  );
+
+const fallbackMessage = (message: string) => {
+  if (matchesGreeting(message)) {
+    return "Hey! I’m here. Where are you heading, or what would you like to know about your trip?";
+  }
+  if (/\b(how are you|how's it going|how are things)\b/i.test(message)) {
+    return "I’m ready to help. You can ask me about a route, delay, fare, direction, or vehicle.";
+  }
+  if (/\b(thanks|thank you|cheers)\b/i.test(message)) {
+    return "You’re welcome. Let me know if you need anything else for your journey.";
+  }
+  if (/\b(help|what can you do)\b/i.test(message)) {
+    return "I can plan a route, check delays, explain fares and directions, or help confirm the right vehicle.";
+  }
+  return "I can help with routes, delays, fares, directions, and vehicle checks. Tell me what you need in your own words.";
+};
+
+const resolveJourneyPlaces = (
+  places: string[],
+  context: AssistantContext,
+) => {
+  if (places.length >= 2) {
+    return { origin: places[0], destination: places[1] };
+  }
+
+  const place = places[0];
+  if (!place) {
+    return {
+      origin: context.origin,
+      destination: context.destination,
+    };
+  }
+  if (!context.origin) {
+    return { origin: place, destination: context.destination };
+  }
+  if (!context.destination && place !== context.origin) {
+    return { origin: context.origin, destination: place };
+  }
+  return { origin: context.origin, destination: context.destination };
+};
+
 export class LocalMemoryAssistant implements AIProvider {
   async respond(
     message: string,
@@ -63,10 +112,7 @@ export class LocalMemoryAssistant implements AIProvider {
   ): Promise<AssistantResult> {
     const lower = message.toLowerCase();
     const places = findPlaces(message);
-    const origin = places[0] ?? context.origin;
-    const destination =
-      places[1] ??
-      (places.length === 1 && context.origin ? places[0] : context.destination);
+    const { origin, destination } = resolveJourneyPlaces(places, context);
     const priority: JourneyPriority =
       lower.includes("few") || lower.includes("without changing")
         ? "fewest_transfers"
@@ -94,17 +140,51 @@ export class LocalMemoryAssistant implements AIProvider {
                   lower.includes("route") ||
                   places.length > 0
                 ? "plan"
-                : "fallback";
+              : "fallback";
+
+    if (intent === "fallback") {
+      return {
+        message: fallbackMessage(message),
+        needs: [],
+        journeys: [],
+        resolvedJourney: { origin, destination },
+        intent,
+        execution: "on_device_memory",
+      };
+    }
+
+    if (intent === "delay" && !origin && !destination) {
+      const activeDisruptions = snapshot.disruptions.filter(
+        (disruption) => disruption.active,
+      );
+      return {
+        message: activeDisruptions.length
+          ? activeDisruptions.map((item) => item.note).join(" ")
+          : "I’m not seeing an active disruption right now. Tell me your line or stops and I can narrow the check.",
+        needs: [],
+        journeys: [],
+        resolvedJourney: {},
+        intent,
+        execution: "on_device_memory",
+      };
+    }
 
     const needs = [
       !origin ? "origin" : null,
       !destination ? "destination" : null,
     ].filter(Boolean) as ("origin" | "destination")[];
     if (needs.length) {
+      const missingDetailsMessage =
+        needs.length === 2
+          ? "Where are you travelling from, and where would you like to go?"
+          : needs[0] === "destination"
+            ? `Got it — starting from ${origin}. Where would you like to go?`
+            : `Where are you starting from? I have ${destination} as your destination.`;
       return {
-        message: `What journey can I help with? Share your ${needs.join(" and ")} when you are ready.`,
+        message: missingDetailsMessage,
         needs,
         journeys: [],
+        resolvedJourney: { origin, destination },
         intent,
         execution: "on_device_memory",
       };
@@ -127,6 +207,7 @@ export class LocalMemoryAssistant implements AIProvider {
           "I cannot find a valid journey in the current test timetable. I will not invent one.",
         needs: [],
         journeys: [],
+        resolvedJourney: { origin, destination },
         intent,
         execution: "on_device_memory",
       };
@@ -136,6 +217,7 @@ export class LocalMemoryAssistant implements AIProvider {
       message: `${best.reason} Leave at ${formatMinutes(best.departureMinutes)} and arrive at ${formatMinutes(best.arrivalMinutes)}.${warning}`,
       needs: [],
       journeys,
+      resolvedJourney: { origin, destination },
       intent,
       execution: "on_device_memory",
     };

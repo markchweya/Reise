@@ -34,6 +34,10 @@ type Conversation = {
   id: string;
   title: string;
   messages: Message[];
+  journeyContext: {
+    origin?: string;
+    destination?: string;
+  };
 };
 
 const titleFromMessage = (message: string) => {
@@ -44,6 +48,7 @@ const titleFromMessage = (message: string) => {
 const createConversation = (userName: string, id = `chat-${Date.now()}`) => ({
   id,
   title: "New chat",
+  journeyContext: {},
   messages: [
     {
       id: `${id}-welcome`,
@@ -76,11 +81,19 @@ export default function AiScreen() {
     conversations.find((chat) => chat.id === activeChatId) ?? conversations[0]!;
   const isThinking = pendingChatIds.includes(activeConversation.id);
 
-  const appendMessage = (chatId: string, message: Message) => {
+  const appendMessage = (
+    chatId: string,
+    message: Message,
+    journeyContext?: Conversation["journeyContext"],
+  ) => {
     setConversations((current) =>
       current.map((chat) =>
         chat.id === chatId
-          ? { ...chat, messages: [...chat.messages, message] }
+          ? {
+              ...chat,
+              journeyContext: journeyContext ?? chat.journeyContext,
+              messages: [...chat.messages, message],
+            }
           : chat,
       ),
     );
@@ -126,17 +139,26 @@ export default function AiScreen() {
       const [response] = await Promise.all([
         assistant.respond(
           message,
-          { priority, travelcard, departureMinutes: 7 * 60 + 35 },
+          {
+            ...activeConversation.journeyContext,
+            priority,
+            travelcard,
+            departureMinutes: 7 * 60 + 35,
+          },
           testNetwork,
         ),
         waitForThinkingCue(),
       ]);
-      appendMessage(chatId, {
-        id: `reise-${requestId}`,
-        role: "reise",
-        text: response.message,
-        journeys: response.journeys,
-      });
+      appendMessage(
+        chatId,
+        {
+          id: `reise-${requestId}`,
+          role: "reise",
+          text: response.message,
+          journeys: response.journeys,
+        },
+        response.resolvedJourney,
+      );
     } catch {
       appendMessage(chatId, {
         id: `reise-error-${requestId}`,
